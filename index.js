@@ -39,39 +39,91 @@ app.get('/customers', async (req, res) => {
 app.get('/customers/create', async (req, res) => {
   const [companies] = await connection.query('SELECT * from Companies');
   const [employees] = await connection.query('SELECT * from Employees');
+  const [products] = await connection.query('SELECT * from Products');
   res.render('customers/add', {
     companies: companies,
-    employees: employees
+    employees: employees,
+    products: products
   });
 });
 
-app.post('/customers/create', async (req, res) => {
-  let { first_name, last_name, email, company_id, employee_id } = req.body;
-  let query = `INSERT INTO Customers (first_name, last_name, email, company_id, employee_id) 
+app.post('/customers/create', async (req, res, next) => {
+  const conn = await connection.getConnection();
+  await conn.beginTransaction();
+  try {
+    let { first_name, last_name, email, company_id, employee_id, product_id } = req.body;
+    let query = `INSERT INTO Customers (first_name, last_name, email, company_id, employee_id) 
             VALUES (?, ?, ?, ?, ?)`;
-  let bindings = [first_name, last_name, email, company_id, employee_id];
-  await connection.execute(query, bindings);
-  res.redirect('/customers');
+    let bindings = [first_name, last_name, email, company_id, employee_id];
+    const [result] = await conn.execute(query, bindings);
+    const newCustomerId = result.insertId;
+    if (product_id) {
+      const productIds = Array.isArray(product_id) ? product_id : [product_id];
+      for (const productId of productIds) {
+        await conn.execute('INSERT INTO CustomerProduct (customer_id, product_id) VALUES (?, ?)', [newCustomerId, productId]);
+      }
+    }
+    await conn.commit();
+    res.redirect('/customers');
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+
 });
 
 app.get('/customers/:customer_id/edit', async (req, res) => {
   let [customers] = await connection.execute('SELECT * from Customers WHERE customer_id = ?', [req.params.customer_id]);
   let [companies] = await connection.execute('SELECT * from Companies');
   let [employees] = await connection.execute('SELECT * from Employees');
+  let [products] = await connection.execute('SELECT * from Products');
+  let [customerProducts] = await connection.execute('SELECT * from CustomerProduct WHERE customer_id = ?', [req.params.customer_id]);
+
+  // customers will be an array, so we take the first element as we are only expecting one customer
   let customer = customers[0];
+  let relatedProducts = customerProducts.map(product => product.product_id);
+
   res.render('customers/edit', {
     customer: customer,
     companies: companies,
-    employees: employees
+    employees: employees,
+    products: products,
+    relatedProducts: relatedProducts
   });
 });
 
-app.post('/customers/:customer_id/edit', async (req, res) => {
-  let { first_name, last_name, email, company_id, employee_id } = req.body;
-  let query = 'UPDATE Customers SET first_name=?, last_name=?, email=?, company_id=?, employee_id=? WHERE customer_id=?';
-  let bindings = [first_name, last_name, email, company_id, employee_id, req.params.customer_id];
-  await connection.execute(query, bindings);
-  res.redirect('/customers');
+app.post('/customers/:customer_id/edit', async (req, res, next) => {
+  const conn = await connection.getConnection();
+  await conn.beginTransaction();
+  try {
+    let { first_name, last_name, email, company_id, employee_id, product_id } = req.body;
+    let query = 'UPDATE Customers SET first_name=?, last_name=?, email=?, company_id=?, employee_id=? WHERE customer_id=?';
+    let bindings = [first_name, last_name, email, company_id, employee_id, req.params.customer_id];
+    await conn.execute(query, bindings);
+
+    // update many to many relationships with products
+
+    // ...delete all products associated with the customers
+    await conn.execute('DELETE FROM CustomerProduct WHERE customer_id=?', [req.params.customer_id]);
+
+    // ...re-add the relationships
+    if (product_id) {
+      const productIds = Array.isArray(product_id) ? product_id : [product_id];
+      for (const productId of productIds) {
+        await conn.execute('INSERT INTO CustomerProduct (customer_id, product_id) VALUES (?, ?)', [req.params.customer_id, productId]);
+      }
+    }
+
+    await conn.commit();
+    res.redirect('/customers');
+  } catch (e) {
+    await conn.rollback();
+    next(e);
+  } finally {
+    conn.release();
+  }
 });
 
 app.listen(3000, () => {

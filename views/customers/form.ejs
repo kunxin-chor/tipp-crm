@@ -1,33 +1,45 @@
 <div class="mb-3">
-    <label>First Name</label>
-    <input type="text" class="form-control" name="first_name" value="<%= customer?.first_name %>">
-  </div>
-  <div class="mb-3">
-    <label>Last Name</label>
-    <input type="text" class="form-control" name="last_name" value="<%= customer?.last_name %>">
-  </div>
-  <div class="mb-3">
-    <label>Email</label>
-    <input type="text" class="form-control" name="email" value="<%= customer?.email %>">
-  </div>
-  <div class="mb-3">
-    <label>Company</label>
-    <select name="company_id" class="form-control" value="<%= customer?.company_id %>">
-      <% companies.forEach(function(company) { %>
-        <option value="<%= company.company_id %>"
-          <%= company.company_id === customer?.company_id ? 'selected' : '' %>
-          ><%= company.name %></option>
+  <label>First Name</label>
+  <input type="text" class="form-control" name="first_name" value="<%= customer?.first_name %>">
+</div>
+<div class="mb-3">
+  <label>Last Name</label>
+  <input type="text" class="form-control" name="last_name" value="<%= customer?.last_name %>">
+</div>
+<div class="mb-3">
+  <label>Email</label>
+  <input type="text" class="form-control" name="email" value="<%= customer?.email %>">
+</div>
+<div class="mb-3">
+  <label>Company</label>
+  <select name="company_id" class="form-control" value="<%= customer?.company_id %>">
+    <% companies.forEach(function(company) { %>
+      <option value="<%= company.company_id %>" <%=company.company_id===customer?.company_id ? 'selected' : '' %>
+        ><%= company.name %>
+      </option>
       <% }); %>
+  </select>
+</div>
+<div>
+  <label>Salesperson</label>
+  <select name="employee_id" class="form-control" value="<%= customer?.employee_id %>">
+    <% employees.forEach(function(employee) { %>
+      <option value="<%= employee.employee_id %>" <%=employee.employee_id===customer?.employee_id ? 'selected' : '' %>
+        ><%= employee.first_name %>
+          <%= employee.last_name %>
+      </option>
+      <% }); %>
+  </select>
+
+  <div class="mb-3">
+    <label>Products</label>
+    <select name="product_id[]" class="form-control" multiple>
+      <% products.forEach(function(product) { %>
+        <option value="<%= product.product_id %>"
+          <%=relatedProducts.includes(product.product_id) ? 'selected' : '' %>>
+          <%= product.name %>
+        </option>
+        <% }); %>
     </select>
   </div>
-  <div>
-    <label>Salesperson</label>
-    <select name="employee_id" class="form-control" value="<%= customer?.employee_id %>">
-      <% employees.forEach(function(employee) { %>
-        <option value="<%= employee.employee_id %>"
-          <%= employee.employee_id === customer?.employee_id ? 'selected' : '' %>
-          ><%= employee.first_name %> <%= employee.last_name %></option>
-      <% }); %>
-    </select>
-  </div>
- 
+</div>
