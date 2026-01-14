@@ -126,6 +126,24 @@ app.post('/customers/:customer_id/edit', async (req, res, next) => {
   }
 });
 
+app.get('/customers/:customer_id/delete', async (req, res) => {
+  // display a confirmation form
+  const [customers] = await connection.execute(
+    'SELECT * FROM Customers WHERE customer_id = ?',
+    [req.params.customer_id]
+  );
+  const customer = customers[0];
+  res.render('customers/delete', {
+    customer: customer
+  });
+});
+
+app.post('/customers/:customer_id/delete', async (req, res) => {
+  await connection.execute('DELETE FROM CustomerProduct WHERE customer_id = ?', [req.params.customer_id]);
+  await connection.execute('DELETE FROM Customers WHERE customer_id = ?', [req.params.customer_id]);
+  res.redirect('/customers');
+});
+
 app.listen(3000, () => {
   console.log('Server is running');
 });
