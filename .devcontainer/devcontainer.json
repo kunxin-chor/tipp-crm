@@ -1,0 +1,21 @@
+{
+	"name": "Node.js & MariaDB",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+	"forwardPorts": [3000, 3306],
+
+	// Example: Run npm install automatically
+	"postCreateCommand": "npm install",
+
+	// Uncomment if you want to customize VS Code settings/extensions here
+	// "customizations": {
+	//     "vscode": {
+	//         "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+	//     }
+	// }
+
+	// Uncomment if you prefer root user inside the dev container.
+	// "remoteUser": "root"
+}
