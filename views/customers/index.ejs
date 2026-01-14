@@ -1,0 +1,26 @@
+<%- contentFor('body') %>
+    <h1>Customers</h1>
+    <table class="table">
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Company</th>
+        </tr>
+        <% customers.forEach(function(customer) { %>
+            <tr>
+                <td>
+                    <%= customer.Customers.first_name %>
+                </td>
+                <td>
+                    <%= customer.Customers.last_name %>
+                </td>
+                <td>
+                    <%= customer.Customers.email %>
+                </td>
+                <td>
+                    <%= customer.Companies.name %>
+                </td>
+            </tr>
+            <% }); %>
+    </table>
