@@ -24,15 +24,46 @@ app.get('/', (req, res) => {
   res.render('landing')
 });
 
+// app.get('/customers', async (req, res) => {
+//   const [customers] = await connection.execute({
+//     sql: `
+//     SELECT * from Customers
+//     JOIN Companies ON Customers.company_id = Companies.company_id`,
+//     nestTables: true
+//   });
+//   res.render('customers/index', {
+//     customers: customers
+//   });
+// });
+
 app.get('/customers', async (req, res) => {
-  const [customers] = await connection.query({
-    sql: `
-    SELECT * from Customers
-    JOIN Companies ON Customers.company_id = Companies.company_id`,
-    nestTables: true
-  });
+  const firstName = req.query.first_name;
+  const lastName = req.query.last_name;
+  const email = req.query.email;
+  let sql = `
+    SELECT * FROM Customers
+      JOIN Companies
+    ON Customers.company_id = Companies.company_id WHERE 1
+  `;
+  const bindings = [];
+  if (firstName) {
+    sql += ' AND first_name LIKE ?';
+    bindings.push('%' + firstName + '%');
+  }
+  if (lastName) {
+    sql += ' AND last_name LIKE ?';
+    bindings.push('%' + lastName + '%');
+  }
+  if (email) {
+    sql += ' AND email LIKE ?';
+    bindings.push('%' + email + '%');
+  }
+  const [customers] = await connection.execute({
+    sql, nestTables: true
+  }, bindings);
   res.render('customers/index', {
-    customers: customers
+    customers: customers,
+    searchParams: req.query
   });
 });
 
@@ -55,7 +86,9 @@ app.post('/customers/create', async (req, res, next) => {
     let query = `INSERT INTO Customers (first_name, last_name, email, company_id, employee_id) 
             VALUES (?, ?, ?, ?, ?)`;
     let bindings = [first_name, last_name, email, company_id, employee_id];
-    const [result] = await conn.execute(query, bindings);
+    const [result] = await conn.execute({
+
+    }, bindings);
     const newCustomerId = result.insertId;
     if (product_id) {
       const productIds = Array.isArray(product_id) ? product_id : [product_id];
@@ -143,6 +176,8 @@ app.post('/customers/:customer_id/delete', async (req, res) => {
   await connection.execute('DELETE FROM Customers WHERE customer_id = ?', [req.params.customer_id]);
   res.redirect('/customers');
 });
+
+
 
 app.listen(3000, () => {
   console.log('Server is running');
