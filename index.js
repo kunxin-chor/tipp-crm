@@ -37,16 +37,19 @@ app.get('/customers', async (req, res) => {
 });
 
 app.get('/customers/create', async (req, res) => {
-  let [companies] = await connection.query('SELECT * from Companies');
+  const [companies] = await connection.query('SELECT * from Companies');
+  const [employees] = await connection.query('SELECT * from Employees');
   res.render('customers/add', {
-    companies: companies
+    companies: companies,
+    employees: employees
   });
 });
 
 app.post('/customers/create', async (req, res) => {
-  let { first_name, last_name, email, company_id } = req.body;
-  let query = 'INSERT INTO Customers (first_name, last_name, email, company_id) VALUES (?, ?, ?, ?)';
-  let bindings = [first_name, last_name, email, company_id];
+  let { first_name, last_name, email, company_id, employee_id } = req.body;
+  let query = `INSERT INTO Customers (first_name, last_name, email, company_id, employee_id) 
+            VALUES (?, ?, ?, ?, ?)`;
+  let bindings = [first_name, last_name, email, company_id, employee_id];
   await connection.execute(query, bindings);
   res.redirect('/customers');
 });

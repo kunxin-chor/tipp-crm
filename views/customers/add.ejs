@@ -1,6 +1,6 @@
 <%- contentFor('body') %>
 <h1>Add a New Customer</h1>
 <form method="POST">
-  <%- include('form', { customer: null, companies: companies}) %>
+  <%- include('form', { customer: null, companies: companies, employees: employees}) %>
   <button type="submit" class="btn btn-primary">Add Customer</button>
 </form>
