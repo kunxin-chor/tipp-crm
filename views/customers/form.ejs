@@ -14,7 +14,9 @@
     <label>Company</label>
     <select name="company_id" class="form-control" value="<%= customer?.company_id %>">
       <% companies.forEach(function(company) { %>
-        <option value="<%= company.company_id %>"><%= company.name %></option>
+        <option value="<%= company.company_id %>"
+          <%= company.company_id === customer?.company_id ? 'selected' : '' %>
+          ><%= company.name %></option>
       <% }); %>
     </select>
   </div>
@@ -22,7 +24,9 @@
     <label>Salesperson</label>
     <select name="employee_id" class="form-control" value="<%= customer?.employee_id %>">
       <% employees.forEach(function(employee) { %>
-        <option value="<%= employee.employee_id %>"><%= employee.first_name %> <%= employee.last_name %></option>
+        <option value="<%= employee.employee_id %>"
+          <%= employee.employee_id === customer?.employee_id ? 'selected' : '' %>
+          ><%= employee.first_name %> <%= employee.last_name %></option>
       <% }); %>
     </select>
   </div>

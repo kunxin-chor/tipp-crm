@@ -6,6 +6,7 @@
             <th>Last Name</th>
             <th>Email</th>
             <th>Company</th>
+            <th>Action</th>
         </tr>
         <% customers.forEach(function(customer) { %>
             <tr>
@@ -20,6 +21,9 @@
                 </td>
                 <td>
                     <%= customer.Companies.name %>
+                </td>
+                <td>
+                    <a href="/customers/<%= customer.Customers.customer_id %>/edit" class="btn btn-primary">Edit</a>
                 </td>
             </tr>
             <% }); %>

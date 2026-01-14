@@ -54,6 +54,25 @@ app.post('/customers/create', async (req, res) => {
   res.redirect('/customers');
 });
 
+app.get('/customers/:customer_id/edit', async (req, res) => {
+  let [customers] = await connection.execute('SELECT * from Customers WHERE customer_id = ?', [req.params.customer_id]);
+  let [companies] = await connection.execute('SELECT * from Companies');
+  let [employees] = await connection.execute('SELECT * from Employees');
+  let customer = customers[0];
+  res.render('customers/edit', {
+    customer: customer,
+    companies: companies,
+    employees: employees
+  });
+});
+
+app.post('/customers/:customer_id/edit', async (req, res) => {
+  let { first_name, last_name, email, company_id, employee_id } = req.body;
+  let query = 'UPDATE Customers SET first_name=?, last_name=?, email=?, company_id=?, employee_id=? WHERE customer_id=?';
+  let bindings = [first_name, last_name, email, company_id, employee_id, req.params.customer_id];
+  await connection.execute(query, bindings);
+  res.redirect('/customers');
+});
 
 app.listen(3000, () => {
   console.log('Server is running');
