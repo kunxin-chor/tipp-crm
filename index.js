@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true}));
 app.set('layout', 'layouts/base');
 
 app.get('/', (req, res) => {
-  res.send('Hello, World!');
+  res.render('landing')
 });
 
 app.listen(3000, () => {
