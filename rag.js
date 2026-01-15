@@ -62,7 +62,72 @@ async function generateEmbedding(text) {
     return response.embeddings[0].values;
 }
 
+async function reRankWithLLM(query, results) {
+    const { ai, MODEL } = require('./gemini');
+    
+    const resultsContext = results.map((r, idx) => {
+        return `${idx + 1}. Product: ${r.name}
+   Description: ${r.description}
+   Relevant Content: ${r.chunk_text.substring(0, 300)}
+   Vector Similarity Score: ${(1 - r.distance).toFixed(3)}`;
+    }).join('\n\n');
+
+    const rankingSchema = {
+        type: "object",
+        properties: {
+            rankings: {
+                type: "array",
+                description: "Array of product indices ordered from most to least relevant",
+                items: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: results.length
+                }
+            },
+            reasoning: {
+                type: "string",
+                description: "Brief explanation of the ranking decisions"
+            }
+        },
+        required: ["rankings"]
+    };
+
+    const prompt = `You are a financial product search assistant. A user searched for: "${query}"
+
+Here are the top matching products based on vector similarity:
+
+${resultsContext}
+
+Analyze the user's query intent and re-rank these products from most to least relevant. Consider:
+1. Negative language (e.g., "not risky", "avoid volatility") - if user says "not X", rank products WITHOUT X higher
+2. User intent and context - understand what they're actually looking for
+3. Semantic meaning beyond keyword matching
+4. The vector similarity scores as a baseline
+
+Return the product indices in order of relevance (most relevant first).`;
+
+    const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseJsonSchema: rankingSchema
+        }
+    });
+
+    try {
+        const result = JSON.parse(response.text);
+        const rankings = result.rankings;
+        const reranked = rankings.map(idx => results[idx - 1]).filter(r => r !== undefined);
+        return reranked.length > 0 ? reranked : results;
+    } catch (e) {
+        console.error('LLM re-ranking failed:', e);
+        return results;
+    }
+}
+
 module.exports = {
     chunkPDF,
-    generateEmbedding
+    generateEmbedding,
+    reRankWithLLM
 };

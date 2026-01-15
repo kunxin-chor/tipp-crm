@@ -4,7 +4,7 @@ const connection = require('./db');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const fs = require('fs');
-const { chunkPDF, generateEmbedding } = require('./rag');
+const { chunkPDF, generateEmbedding, reRankWithLLM } = require('./rag');
 
 router.use(fileUpload());
 
@@ -46,9 +46,11 @@ router.get('/search', async function(req, res){
         LIMIT 10
     `, [vectorString]);
 
+    const rerankedResults = await reRankWithLLM(query, results);
+
     res.render('products/search', {
         query: query,
-        results: results
+        results: rerankedResults
     });
 });
 
