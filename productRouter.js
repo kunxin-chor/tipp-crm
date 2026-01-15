@@ -41,26 +41,32 @@ router.post('/:productId/upload', async function(req, res, next){
     const conn = await connection.getConnection();
     await conn.beginTransaction();
     try {
+        // 1. check if a file is uploaded
         if (!req.files || !req.files.pdf) {
             throw new Error('No file uploaded');
         }
 
+        // 2. check if the file is a pdf
         const pdfFile = req.files.pdf;
         if (path.extname(pdfFile.name).toLowerCase() !== '.pdf') {
             throw new Error('Only PDF files are allowed');
         }
 
+        // 3. save the file; create a uploads directory if it doesn't exist
         const uploadDir = path.join(__dirname, 'uploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
 
+        // 4. generate a unique filename
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const filename = uniqueSuffix + path.extname(pdfFile.name);
         const filePath = path.join(uploadDir, filename);
         
+        // 5. move the file to the upload directory
         await pdfFile.mv(filePath);
 
+        // 6. insert the file into the database
         const productId = req.params.productId;
         const [result] = await conn.execute(
             'INSERT INTO PDF (filename, original_filename, file_path, file_size) VALUES (?, ?, ?, ?)',
@@ -68,6 +74,7 @@ router.post('/:productId/upload', async function(req, res, next){
         );
         const newPdfId = result.insertId;
 
+        // 7. update the product with the new pdf id
         await conn.execute(
             'UPDATE Products SET pdf_id = ? WHERE product_id = ?',
             [newPdfId, productId]
