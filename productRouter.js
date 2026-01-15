@@ -19,6 +19,39 @@ router.get('/', async function (req, res)  {
     });
 });
 
+router.get('/search', async function(req, res){
+    const query = req.query.q;
+    
+    if (!query) {
+        return res.redirect('/products');
+    }
+
+    const queryEmbedding = await generateEmbedding(query);
+    const vectorString = '[' + queryEmbedding.join(',') + ']';
+
+    const [results] = await connection.execute(`
+        SELECT DISTINCT 
+            Products.product_id,
+            Products.name,
+            Products.description,
+            Products.pdf_id,
+            PDF.filename,
+            PDF.original_filename,
+            PDFChunks.chunk_text,
+            VEC_DISTANCE(PDFChunks.embedding, VEC_FromText(?)) as distance
+        FROM PDFChunks
+        JOIN PDF ON PDFChunks.pdf_id = PDF.pdf_id
+        JOIN Products ON Products.pdf_id = PDF.pdf_id
+        ORDER BY distance ASC
+        LIMIT 10
+    `, [vectorString]);
+
+    res.render('products/search', {
+        query: query,
+        results: results
+    });
+});
+
 router.get('/:productId', async function(req, res){
     const [products] = await connection.execute({
         sql: 'SELECT * from Products LEFT JOIN PDF ON Products.pdf_id = PDF.pdf_id WHERE product_id = ?',

@@ -1,5 +1,12 @@
 <%- contentFor('body') %>
 
+<h1>Products</h1>
+
+<form action="/products/search" method="get" style="margin-bottom: 20px;">
+    <input type="text" name="q" placeholder="Search products by natural language..." style="width: 400px; padding: 8px;" required>
+    <button type="submit">Search</button>
+</form>
+
 <table class="table">
     <thead>
         <tr>
