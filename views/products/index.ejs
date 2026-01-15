@@ -1,0 +1,30 @@
+<%- contentFor('body') %>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>PDF</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <% products.forEach(function(product){ %>
+            <tr>
+                <td>
+                    <%= product.Products.name %>
+                </td>
+                <td>
+                    <%= product.Products.description %>
+                </td>
+                <td>
+                    <%= product.PDF.filename %>
+                </td>
+                <td>
+                     <a href="/products/<%= product.Products.product_id %>">View</a>
+                </td>
+            </tr>
+        <% }); %>
+    </tbody>
+</table>
