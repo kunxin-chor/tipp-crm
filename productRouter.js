@@ -4,6 +4,7 @@ const connection = require('./db');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const fs = require('fs');
+const { chunkPDF, generateEmbedding } = require('./rag');
 
 router.use(fileUpload());
 
@@ -79,6 +80,19 @@ router.post('/:productId/upload', async function(req, res, next){
             'UPDATE Products SET pdf_id = ? WHERE product_id = ?',
             [newPdfId, productId]
         );
+
+        // 8. chunk the PDF and generate embeddings
+        const chunks = await chunkPDF(filePath);
+        for (const chunk of chunks) {
+            const embeddingValues = await generateEmbedding(chunk.text);
+            
+            const vectorString = '[' + embeddingValues.join(',') + ']';
+    
+            await conn.execute(
+                'INSERT INTO PDFChunks (pdf_id, chunk_text, chunk_order, embedding) VALUES (?, ?, ?, VEC_FromText(?))',  
+                [newPdfId, chunk.text, chunk.order, vectorString]
+            );
+        }
 
         await conn.commit();
         res.redirect('/products/' + productId);

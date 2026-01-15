@@ -30,5 +30,5 @@ CREATE TABLE IF NOT EXISTS PDFChunks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (pdf_id) REFERENCES PDF(pdf_id) ON DELETE CASCADE,
     INDEX idx_pdf_id (pdf_id),
-    VECTOR INDEX (embedding)
+    VECTOR INDEX (embedding) M=8 DISTANCE=cosine
 );
