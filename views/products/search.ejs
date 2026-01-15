@@ -14,6 +14,7 @@
                 <th>Description</th>
                 <th>Matching Content</th>
                 <th>Relevance</th>
+                <th>Matching Chunks</th>
                 <th></th>
             </tr>
         </thead>
@@ -27,10 +28,13 @@
                         <%= result.description %>
                     </td>
                     <td>
-                        <%= result.chunk_text.substring(0, 150) %>...
+                        <%= result.best_chunk_text.substring(0, 150) %>...
                     </td>
                     <td>
-                        <%= (1 - result.distance).toFixed(3) %>
+                        <%= (1 - result.best_distance).toFixed(3) %>
+                    </td>
+                    <td>
+                        <%= result.relevant_chunk_count %>
                     </td>
                     <td>
                         <a href="/products/<%= result.product_id %>">View</a>

@@ -30,21 +30,27 @@ router.get('/search', async function(req, res){
     const vectorString = '[' + queryEmbedding.join(',') + ']';
 
     const [results] = await connection.execute(`
-        SELECT DISTINCT 
+        SELECT 
             Products.product_id,
             Products.name,
             Products.description,
             Products.pdf_id,
             PDF.filename,
             PDF.original_filename,
-            PDFChunks.chunk_text,
-            VEC_DISTANCE(PDFChunks.embedding, VEC_FromText(?)) as distance
+            MIN(VEC_DISTANCE(PDFChunks.embedding, VEC_FromText(?))) as best_distance,
+            COUNT(CASE WHEN VEC_DISTANCE(PDFChunks.embedding, VEC_FromText(?)) < 0.5 THEN 1 END) as relevant_chunk_count,
+            (MIN(VEC_DISTANCE(PDFChunks.embedding, VEC_FromText(?))) - (COUNT(CASE WHEN VEC_DISTANCE(PDFChunks.embedding, VEC_FromText(?)) < 0.5 THEN 1 END) * 0.05)) as combined_score,
+            (SELECT chunk_text FROM PDFChunks pc 
+             WHERE pc.pdf_id = PDF.pdf_id 
+             ORDER BY VEC_DISTANCE(pc.embedding, VEC_FromText(?)) ASC 
+             LIMIT 1) as best_chunk_text
         FROM PDFChunks
         JOIN PDF ON PDFChunks.pdf_id = PDF.pdf_id
         JOIN Products ON Products.pdf_id = PDF.pdf_id
-        ORDER BY distance ASC
+        GROUP BY Products.product_id, Products.name, Products.description, Products.pdf_id, PDF.filename, PDF.original_filename
+        ORDER BY combined_score ASC
         LIMIT 10
-    `, [vectorString]);
+    `, [vectorString, vectorString, vectorString, vectorString, vectorString]);
 
     res.render('products/search', {
         query: query,
