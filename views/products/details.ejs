@@ -1,6 +1,54 @@
 <%- contentFor('body') %>
 <h1><%= product.Products.name %></h1>
 <p><%= product.Products.description %></p>
-<p><%= product.PDF.filename %></p>
+<p><strong>PDF:</strong> <%= product.PDF.filename %></p>
+
 <a class="btn btn-primary" href="/products/<%= product.Products.product_id %>/upload">Upload PDF</a>
 <a class="btn btn-primary" href="/products">Back to Products</a>
+
+<% if (product.PDF.pdf_id) { %>
+    <hr>
+    <h2>Ask a Question About This Product</h2>
+    
+    <form id="question-form" style="margin: 20px 0;">
+        <input type="text" id="question-input" name="question" placeholder="Ask a question about this product..." style="width: 70%; padding: 8px;" required>
+        <button type="submit" class="btn btn-primary">Ask</button>
+    </form>
+
+    <div id="answer-container" style="display: none; border: 1px solid #ccc; padding: 15px; margin: 20px 0; background: #f9f9f9;">
+        <h3>Answer:</h3>
+        <p id="answer-text"></p>
+    </div>
+
+    <script>
+        const questionForm = document.getElementById('question-form');
+        const questionInput = document.getElementById('question-input');
+        const answerContainer = document.getElementById('answer-container');
+        const answerText = document.getElementById('answer-text');
+        const productId = <%= product.Products.product_id %>;
+
+        questionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            answerText.textContent = 'Thinking...';
+            answerContainer.style.display = 'block';
+
+            try {
+                const response = await fetch(`/products/${productId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+                answerText.textContent = data.answer;
+            } catch (error) {
+                answerText.textContent = 'Error: Could not get answer. Please try again.';
+            }
+        });
+    </script>
+<% } %>

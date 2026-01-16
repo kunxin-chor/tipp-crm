@@ -4,7 +4,7 @@ const connection = require('./db');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const fs = require('fs');
-const { chunkPDF, generateEmbedding } = require('./rag');
+const { chunkPDF, generateEmbedding, reRankWithLLM, answerQuestion } = require('./rag');
 
 router.use(fileUpload());
 
@@ -134,6 +134,33 @@ router.post('/:productId/upload', async function(req, res, next){
         next(e);
     } finally {
         conn.release();
+    }
+});
+
+router.post('/:productId/chat', express.json(), async function(req, res, next){
+    try {
+        const productId = req.params.productId;
+        const question = req.body.question;
+
+        if (!question) {
+            return res.status(400).json({ error: 'Question is required' });
+        }
+
+        const [products] = await connection.execute(
+            'SELECT pdf_id FROM Products WHERE product_id = ?',
+            [productId]
+        );
+
+        if (products.length === 0 || !products[0].pdf_id) {
+            return res.status(404).json({ error: 'No PDF found for this product' });
+        }
+
+        const pdfId = products[0].pdf_id;
+        const answer = await answerQuestion(question, pdfId, connection);
+
+        res.json({ answer });
+    } catch (e) {
+        next(e);
     }
 });
 
